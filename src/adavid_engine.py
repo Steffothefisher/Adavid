@@ -3,7 +3,7 @@ import pandas as pd
 from scipy import stats
 from typing import Dict, List, Optional, Tuple
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 
 # Configure logging
@@ -33,31 +33,28 @@ class AuditConfig:
     p_value_deviation_tolerance: float = 0.01
     min_sample_size: int = 30
     ppv_threshold: float = 0.10
-    age_bins: List[int] = None
-    age_labels: List[str] = None
-    
-    def __post_init__(self):
-        if self.age_bins is None:
-            self.age_bins = [0, 35, 60, 100]
-        if self.age_labels is None:
-            self.age_labels = ['Young', 'Middle', 'Senior']
+    max_acceptable_fatality_increase: float = 0.02
+    age_bins: List[int] = field(default_factory=lambda: [0, 35, 60, 100])
+    age_labels: List[str] = field(default_factory=lambda: ['Jung', 'Mittel', 'Alt'])
 
 
 class AdavidAuditEngine:
     """
-    ADAVID Audit Engine for detecting statistical fraud in clinical trials.
+    ADAVID Audit Engine for detecting statistical fraud and safety issues in clinical trials.
     
     Detects:
-    - p-hacking and data integrity issues
-    - Simpson's Paradox in subgroup analyses
-    - Base rate fallacies in diagnostic tests
+    - Level 1: p-hacking and data integrity issues
+    - Level 2: Simpson's Paradox in subgroup analyses
+    - Level 3: Base rate fallacies in diagnostic tests
+    - Level 4: Fatality rates and hidden toxicity
     
     Expected DataFrame columns:
         - patient_id: Unique patient identifier
         - age: Patient age (numeric)
-        - gender: Patient gender
+        - gender: Patient gender (optional)
         - treatment: Treatment group (0=Placebo, 1=Treatment)
         - outcome: Primary outcome (0=Failure, 1=Success)
+        - fatality: Fatality indicator (0=Survived, 1=Fatal) (optional)
     """
     
     def __init__(self, trial_data: pd.DataFrame, config: Optional[AuditConfig] = None):
@@ -252,6 +249,103 @@ class AdavidAuditEngine:
             "status": status.value
         }
     
+    def audit_fatality_rates(self, max_acceptable_fatality_increase: Optional[float] = None) -> Dict:
+        """
+        Level 4: Fatality Rate & Hidden Toxicity Audit.
+        Detects critical safety issues by analyzing fatality rates globally and by cohort.
+        
+        Args:
+            max_acceptable_fatality_increase: Maximum acceptable fatality increase (default from config)
+            
+        Returns:
+            Dictionary with fatality analysis results
+        """
+        if max_acceptable_fatality_increase is None:
+            max_acceptable_fatality_increase = self.config.max_acceptable_fatality_increase
+        
+        # Check if fatality column exists
+        if 'fatality' not in self.data.columns:
+            logger.warning("Fatality column not present in data. Skipping fatality audit.")
+            return {
+                "test_name": "Fatality Rate & Hidden Toxicity Audit",
+                "status": AuditStatus.WARNING.value,
+                "message": "Fatality column not found in data"
+            }
+        
+        # Create age cohorts if not already present
+        if 'age_group' not in self.data.columns:
+            try:
+                self.data['age_group'] = pd.cut(
+                    self.data['age'],
+                    bins=self.config.age_bins,
+                    labels=self.config.age_labels,
+                    include_lowest=True
+                )
+            except Exception as e:
+                logger.error(f"Failed to create age groups: {e}")
+                return {
+                    "test_name": "Fatality Rate & Hidden Toxicity Audit",
+                    "status": AuditStatus.FAIL.value,
+                    "error": str(e)
+                }
+        
+        # Calculate global fatality rates
+        treatment_data = self.data[self.data['treatment'] == 1]['fatality'].dropna()
+        placebo_data = self.data[self.data['treatment'] == 0]['fatality'].dropna()
+        
+        if len(treatment_data) == 0 or len(placebo_data) == 0:
+            logger.warning("Insufficient fatality data for analysis")
+            return {
+                "test_name": "Fatality Rate & Hidden Toxicity Audit",
+                "status": AuditStatus.WARNING.value,
+                "message": "Insufficient fatality data"
+            }
+        
+        fatality_treatment = treatment_data.mean()
+        fatality_placebo = placebo_data.mean()
+        global_delta = fatality_treatment - fatality_placebo
+        
+        critical_toxicity_detected = global_delta > max_acceptable_fatality_increase
+        cohort_alerts = {}
+        
+        # Cohort-specific fatality analysis
+        for cohort_name, cohort_data in self.data.groupby('age_group', observed=True):
+            treat_fatal = cohort_data[cohort_data['treatment'] == 1]['fatality'].dropna()
+            plac_fatal = cohort_data[cohort_data['treatment'] == 0]['fatality'].dropna()
+            
+            if len(treat_fatal) == 0 or len(plac_fatal) == 0:
+                continue
+            
+            f_treat = treat_fatal.mean()
+            f_plac = plac_fatal.mean()
+            cohort_delta = f_treat - f_plac
+            
+            if cohort_delta > max_acceptable_fatality_increase:
+                critical_toxicity_detected = True
+                cohort_alerts[str(cohort_name)] = {
+                    "alert": "CRITICAL TOXICITY SPIKE",
+                    "treatment_fatality": round(f_treat, 4),
+                    "placebo_fatality": round(f_plac, 4),
+                    "delta": round(cohort_delta, 4),
+                    "n_treatment": len(treat_fatal),
+                    "n_placebo": len(plac_fatal)
+                }
+                logger.critical(f"Critical toxicity spike detected in cohort '{cohort_name}': delta={cohort_delta:.4f}")
+        
+        status = AuditStatus.FAIL if critical_toxicity_detected else AuditStatus.PASS
+        
+        return {
+            "test_name": "Fatality Rate & Hidden Toxicity Audit",
+            "global_treatment_fatality": round(fatality_treatment, 4),
+            "global_placebo_fatality": round(fatality_placebo, 4),
+            "global_delta": round(global_delta, 4),
+            "treatment_n": len(treatment_data),
+            "placebo_n": len(placebo_data),
+            "critical_toxicity_detected": critical_toxicity_detected,
+            "cohort_specific_failures": cohort_alerts,
+            "status": status.value
+        }
+    
     @staticmethod
     def calculate_base_rate_efficiency(
         sensitivity: float,
@@ -319,7 +413,7 @@ class AdavidAuditEngine:
     
     def run_full_audit(self, claimed_p_value: float) -> Dict:
         """
-        Run all three audit levels in sequence.
+        Run all four audit levels in sequence.
         
         Args:
             claimed_p_value: The p-value reported in the study
@@ -333,13 +427,18 @@ class AdavidAuditEngine:
             "audit_timestamp": pd.Timestamp.now().isoformat(),
             "total_patients": len(self.data),
             "level_1_p_hacking": self.audit_p_hacking(claimed_p_value),
-            "level_2_simpsons": self.audit_simpsons_paradox()
+            "level_2_simpsons": self.audit_simpsons_paradox(),
+            "level_4_fatality": self.audit_fatality_rates()
         }
         
         # Determine overall status
         all_pass = all(
             result.get("status") == AuditStatus.PASS.value 
-            for result in [audit_results["level_1_p_hacking"], audit_results["level_2_simpsons"]]
+            for result in [
+                audit_results["level_1_p_hacking"],
+                audit_results["level_2_simpsons"],
+                audit_results["level_4_fatality"]
+            ]
         )
         
         audit_results["overall_status"] = AuditStatus.PASS.value if all_pass else AuditStatus.FAIL.value
