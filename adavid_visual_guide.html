@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADAVID Engine - Visual Reference Guide</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: #e0e0e0;
+            font-family: 'Monaco', 'Courier New', monospace;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            padding: 30px 0;
+            border-bottom: 2px solid #00d4ff;
+        }
+
+        h1 {
+            font-size: 3em;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-shadow: 0 0 30px rgba(0, 212, 255, 0.3);
+        }
+
+        .subtitle {
+            color: #00d4ff;
+            font-size: 0.9em;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .section {
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: #00d4ff;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #00d4ff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '◆';
+            color: #7c3aed;
+        }
+
+        /* Data Flow Diagram */
+        .flow-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .flow-step {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.05);
+            border: 2px solid #00d4ff;
+            border-radius: 8px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .flow-step:hover {
+            background: rgba(0, 212, 255, 0.1);
+            transform: translateX(10px);
+        }
+
+        .flow-number {
+            min-width: 50px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.3em;
+            color: #000;
+        }
+
+        .flow-content h3 {
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+
+        .flow-content p {
+            color: #a0a0a0;
+            font-size: 0.9em;
+        }
+
+        .arrow {
+            text-align: center;
+            color: #7c3aed;
+            font-size: 1.5em;
+            margin: -10px 0;
+        }
+
+        /* Statistical Tests Grid */
+        .tests-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .test-card {
+            padding: 20px;
+            background: rgba(124, 58, 237, 0.05);
+            border: 2px solid #7c3aed;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .test-card:hover {
+            background: rgba(124, 58, 237, 0.15);
+            transform: translateY(-5px);
+        }
+
+        .test-card h3 {
+            color: #7c3aed;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .test-card .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            color: #00d4ff;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .test-card .description {
+            color: #a0a0a0;
+            font-size: 0.9em;
+        }
+
+        /* Decision Tree */
+        .decision-tree {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 212, 255, 0.05);
+            border-left: 4px solid #00d4ff;
+            border-radius: 4px;
+        }
+
+        .tree-node {
+            margin: 15px 0 15px 20px;
+            padding-left: 20px;
+            border-left: 2px solid #00d4ff;
+            position: relative;
+        }
+
+        .tree-node::before {
+            content: '';
+            position: absolute;
+            left: -12px;
+            top: 8px;
+            width: 10px;
+            height: 2px;
+            background: #00d4ff;
+        }
+
+        .tree-node.success {
+            border-left-color: #22c55e;
+        }
+
+        .tree-node.success::before {
+            background: #22c55e;
+        }
+
+        .tree-node.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .tree-node.warning::before {
+            background: #f59e0b;
+        }
+
+        .tree-node.danger {
+            border-left-color: #ef4444;
+        }
+
+        .tree-node.danger::before {
+            background: #ef4444;
+        }
+
+        .tree-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .success { color: #22c55e; }
+        .warning { color: #f59e0b; }
+        .danger { color: #ef4444; }
+
+        /* Segmentation Matrix */
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid #00d4ff;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .matrix-table th {
+            background: rgba(0, 212, 255, 0.1);
+            padding: 12px;
+            text-align: left;
+            color: #00d4ff;
+            border-bottom: 2px solid #00d4ff;
+            font-weight: bold;
+        }
+
+        .matrix-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+        }
+
+        .matrix-table tr:hover {
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        /* Key Concepts */
+        .concept-box {
+            padding: 20px;
+            margin: 20px 0;
+            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(0, 212, 255, 0.05));
+            border-left: 4px solid #7c3aed;
+            border-radius: 4px;
+        }
+
+        .concept-box h4 {
+            color: #7c3aed;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .concept-box p {
+            color: #b0b0b0;
+            font-size: 0.95em;
+        }
+
+        .formula {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 4px;
+            color: #00d4ff;
+            font-size: 0.9em;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        /* Checklist */
+        .checklist {
+            list-style: none;
+            margin: 20px 0;
+        }
+
+        .checklist li {
+            padding: 10px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .checklist li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px 0;
+            border-top: 2px solid #00d4ff;
+            color: #606060;
+            font-size: 0.85em;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            .flow-step {
+                flex-direction: column;
+            }
+            .tests-grid {
+                grid-template-columns: 1fr;
+            }
+            .matrix-table th, .matrix-table td {
+                padding: 8px;
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="subtitle">Pharmaceutical Audit System</div>
+            <h1>ADAVID ENGINE</h1>
+            <p class="subtitle">Visual Reference & Methodology Guide</p>
+        </header>
+
+        <!-- Data Processing Flow -->
+        <div class="section">
+            <div class="section-title">Data Processing Pipeline</div>
+            
+            <div class="flow-diagram">
+                <div class="flow-step">
+                    <div class="flow-number">1</div>
+                    <div class="flow-content">
+                        <h3>Raw Data Input</h3>
+                        <p>500 patient records with 7 features: Patient_ID, Group, Age, Gender, Comorbidities_Count, Genetic_Variant_X, Biomarker_Drop</p>
+                    </div>
+                </div>
+
+                <div class="arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">2</div>
+                    <div class="flow-content">
+                        <h3>DataVerificationLayer</h3>
+                        <p>Remove nulls in critical fields → Filter invalid groups → Remove impossible values (negative age) → Impute age gaps via categorization</p>
+                    </div>
+                </div>
+
+                <div class="arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">3</div>
+                    <div class="flow-content">
+                        <h3>Clean Data</h3>
+                        <p>Verified dataset ready for statistical testing. Logging records data loss percentage for audit trail.</p>
+                    </div>
+                </div>
+
+                <div class="arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">4</div>
+                    <div class="flow-content">
+                        <h3>ADAVIDEngine Analysis</h3>
+                        <p>Global effect test + Multidimensional segmentation + Simpson's Paradox detection</p>
+                    </div>
+                </div>
+
+                <div class="arrow">↓</div>
+
+                <div class="flow-step">
+                    <div class="flow-number">5</div>
+                    <div class="flow-content">
+                        <h3>Regulatory Report</h3>
+                        <p>Approve / Conditional Approval / Reject with detailed non-responder analysis</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistical Methods -->
+        <div class="section">
+            <div class="section-title">Statistical Tests & Corrections</div>
+            
+            <div class="tests-grid">
+                <div class="test-card">
+                    <h3>Welch's t-test (Global)</h3>
+                    <div class="code">stats.ttest_ind(treatment, control, equal_var=False)</div>
+                    <div class="description">
+                        Tests if Treatment and Control groups differ significantly. Doesn't assume equal variances—more robust for real data.
+                    </div>
+                    <div class="formula">
+                        t = (m₁ - m₂) / √(s₁²/n₁ + s₂²/n₂)
+                    </div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Bonferroni Correction</h3>
+                    <div class="code">α_adjusted = 0.05 / number_of_segments</div>
+                    <div class="description">
+                        Prevents multiple comparison bias. If testing 20 segments at α=0.05, false positive rate = 64%. This reduces it to ~2.5%.
+                    </div>
+                    <div class="formula">
+                        FWER = 1 - (1 - α)^k ≈ k·α (for small α)
+                    </div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Sample Size Validation</h3>
+                    <div class="code">if len(ctrl) &lt; 5 or len(treat) &lt; 5: continue</div>
+                    <div class="description">
+                        Minimum n=5 per group per segment prevents statistical noise from underpowered tests.
+                    </div>
+                    <div class="formula">
+                        Statistical power ∝ √n (larger n = more reliable)
+                    </div>
+                </div>
+
+                <div class="test-card">
+                    <h3>Simpson's Paradox Test</h3>
+                    <div class="code">if global_trend and not segment_trend: paradox_detected = True</div>
+                    <div class="description">
+                        Detects when drug works overall but fails in specific subgroups—critical regulatory red flag.
+                    </div>
+                    <div class="formula">
+                        Paradox = Global(Treated > Control) AND Segment(Treated ≤ Control)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Segmentation Matrix -->
+        <div class="section">
+            <div class="section-title">Patient Segmentation Matrix</div>
+            
+            <p style="margin-bottom: 20px; color: #a0a0a0;">
+                The engine segments patients into 3D clusters: <strong>Age_Group × Genetic_Variant_X × Comorbidities_Count</strong>
+            </p>
+
+            <table class="matrix-table">
+                <thead>
+                    <tr>
+                        <th>Dimension</th>
+                        <th>Categories</th>
+                        <th>Count</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Age_Group</strong></td>
+                        <td>Young (≤35) | Middle-Aged (36-60) | Senior (>60) | Unknown</td>
+                        <td>4</td>
+                        <td>Age-dependent drug metabolism varies</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Genetic_Variant_X</strong></td>
+                        <td>True (carrier) | False (non-carrier)</td>
+                        <td>2</td>
+                        <td>Pharmacogenetic response predictor</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Comorbidities_Count</strong></td>
+                        <td>0, 1, 2, 3, 4 chronic conditions</td>
+                        <td>5</td>
+                        <td>Drug-disease interaction risk</td>
+                    </tr>
+                    <tr style="background: rgba(124, 58, 237, 0.1);">
+                        <td colspan="2"><strong>Maximum Possible Segments</strong></td>
+                        <td colspan="2"><strong>4 × 2 × 5 = 40 clusters</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="concept-box">
+                <h4>Why Multidimensional Segmentation?</h4>
+                <p>
+                    Real patients are complex. A drug might work great for <em>young genetic carriers with no comorbidities</em> but fail for <em>elderly non-carriers with multiple conditions</em>. Testing only the aggregate effect would miss these critical patient safety issues.
+                </p>
+            </div>
+        </div>
+
+        <!-- Decision Tree -->
+        <div class="section">
+            <div class="section-title">Regulatory Decision Tree</div>
+            
+            <div class="decision-tree">
+                <div class="tree-node">
+                    <div class="tree-label">START: Clinical Trial Analysis</div>
+                    <div style="color: #a0a0a0;">↓</div>
+                </div>
+
+                <div class="tree-node">
+                    <div class="tree-label">Global p-value &lt; 0.05?</div>
+                </div>
+
+                <div style="margin-left: 40px;">
+                    <div class="tree-node danger">
+                        <div class="tree-label">❌ NO</div>
+                        <div style="color: #ef4444; font-size: 0.9em;">RECOMMENDATION: REJECT DRUG</div>
+                        <div style="color: #a0a0a0; font-size: 0.85em;">No statistically significant efficacy demonstrated</div>
+                    </div>
+
+                    <div class="tree-node success">
+                        <div class="tree-label">✓ YES</div>
+                        <div style="color: #a0a0a0;">↓ Continue to subgroup analysis</div>
+                    </div>
+                </div>
+
+                <div style="margin-left: 40px;">
+                    <div class="tree-node">
+                        <div class="tree-label">Simpson's Paradox Detected?</div>
+                    </div>
+
+                    <div style="margin-left: 40px;">
+                        <div class="tree-node success">
+                            <div class="tree-label">❌ NO</div>
+                            <div style="color: #22c55e; font-weight: bold;">RECOMMENDATION: APPROVE</div>
+                            <div style="color: #a0a0a0; font-size: 0.85em;">Drug effective across all major subgroups. No safety signals.</div>
+                        </div>
+
+                        <div class="tree-node warning">
+                            <div class="tree-label">⚠ YES</div>
+                            <div style="color: #f59e0b; font-weight: bold;">RECOMMENDATION: CONDITIONAL APPROVAL</div>
+                            <div style="color: #a0a0a0; font-size: 0.85em;">
+                                Drug approved with restrictions:
+                                <ul style="margin-top: 5px; margin-left: 15px;">
+                                    <li>Genetic testing required before prescription</li>
+                                    <li>Age-specific dosing guidelines</li>
+                                    <li>Post-marketing surveillance mandatory</li>
+                                    <li>Contraindicated in identified non-responder groups</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Concepts -->
+        <div class="section">
+            <div class="section-title">Key Regulatory Concepts</div>
+
+            <div class="concept-box">
+                <h4>🎯 Simpson's Paradox in Pharma</h4>
+                <p>
+                    A drug shows +25% improvement overall but fails in young patients (-5%) and helps elderly patients (+60%). 
+                    The overall success masks a critical safety issue: the drug is contraindicated for youth.
+                </p>
+                <div class="formula">
+                    Global: (60% of patients improve) | Youth: (20% improve) | Elderly: (85% improve)
+                </div>
+                <p style="margin-top: 10px; color: #f59e0b;">
+                    ⚠️ Regulatory red flag: Requires stratified approval or additional studies
+                </p>
+            </div>
+
+            <div class="concept-box">
+                <h4>📊 Bonferroni Correction Explained</h4>
+                <p>
+                    If you flip a coin 20 times and declare "heads is more likely" whenever you see 6+ heads in a row, 
+                    you'll make false claims ~64% of the time. Bonferroni reduces your threshold to account for this.
+                </p>
+                <div class="formula">
+                    Standard: α = 0.05 → 5% false positive per test<br>
+                    Multiple (20 tests): α = 0.0025 → ~0.25% false positive per test
+                </div>
+            </div>
+
+            <div class="concept-box">
+                <h4>🔍 Data Validation Safeguards</h4>
+                <p>
+                    Before any statistical test, the code removes:
+                </p>
+                <ul class="checklist">
+                    <li>Null values in critical fields (Patient_ID, Group, Outcome)</li>
+                    <li>Invalid categorical values ("INVALID_ENTRY" groups)</li>
+                    <li>Impossible biological values (negative age)</li>
+                    <li>Underpowered segments (&lt;5 samples per group)</li>
+                </ul>
+            </div>
+
+            <div class="concept-box">
+                <h4>📋 Audit Trail Compliance</h4>
+                <p>
+                    All decisions logged with timestamps. FDA/EMA inspectors can trace:
+                </p>
+                <ul class="checklist">
+                    <li>What data was excluded and why</li>
+                    <li>Exact statistical tests performed</li>
+                    <li>P-values and confidence intervals</li>
+                    <li>Subgroup findings and paradox detection</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Interpretation Guide -->
+        <div class="section">
+            <div class="section-title">Report Interpretation Guide</div>
+
+            <div class="concept-box" style="border-left-color: #22c55e;">
+                <h4 style="color: #22c55e;">✅ GREEN LIGHT: Full Approval</h4>
+                <div style="color: #a0a0a0; margin-top: 10px;">
+                    <div><strong>Global p &lt; 0.05:</strong> Drug is effective ✓</div>
+                    <div><strong>Simpson's Paradox:</strong> NOT detected ✓</div>
+                    <div><strong>All segments:</strong> Positive trend ✓</div>
+                    <p style="margin-top: 10px; color: #22c55e;"><strong>→ APPROVE FOR GENERAL USE</strong></p>
+                </div>
+            </div>
+
+            <div class="concept-box" style="border-left-color: #f59e0b;">
+                <h4 style="color: #f59e0b;">⚠️ YELLOW FLAG: Conditional Approval</h4>
+                <div style="color: #a0a0a0; margin-top: 10px;">
+                    <div><strong>Global p &lt; 0.05:</strong> Drug shows efficacy ✓</div>
+                    <div><strong>Simpson's Paradox:</strong> DETECTED ⚠️</div>
+                    <div><strong>Some segments:</strong> Fail or show harm</div>
+                    <p style="margin-top: 10px; color: #f59e0b;"><strong>→ CONDITIONAL APPROVAL with restrictions</strong></p>
+                    <ul style="margin-top: 10px; margin-left: 20px;">
+                        <li>Pharmacogenetic testing required</li>
+                        <li>Age-adjusted dosing</li>
+                        <li>Contraindicated in non-responder groups</li>
+                        <li>Mandatory post-market surveillance</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="concept-box" style="border-left-color: #ef4444;">
+                <h4 style="color: #ef4444;">🚨 RED FLAG: Rejection</h4>
+                <div style="color: #a0a0a0; margin-top: 10px;">
+                    <div><strong>Global p ≥ 0.05:</strong> NO efficacy demonstrated</div>
+                    <div style="margin-top: 10px; color: #ef4444;"><strong>→ REJECT - Insufficient efficacy</strong></div>
+                    <p style="margin-top: 10px; color: #a0a0a0; font-size: 0.9em;">
+                        Note: Even if some subgroups show benefit, failure at population level = regulatory rejection
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>ADAVID v1.7 | Advanced Data-Driven Visualization & Impact Detection</p>
+            <p>FDA/EMA Phase III Clinical Trial Compliance Grade</p>
+            <p>Generated: 2024 | Document Type: Statistical Methodology Reference</p>
+        </footer>
+    </div>
+</body>
+</html>
