@@ -1,0 +1,127 @@
+"""
+ADAVID — Real Power Analysis via Non-Central t-Distribution
+Licensed under AGPL v3 — Copyright (c) 2026 ADAVID Contributors
+
+This replaces the earlier normal-approximation power analysis with the EXACT
+calculation based on the non-central t-distribution (scipy.stats.nct), which is
+what statsmodels and G*Power use. Every value here is [COMPUTED].
+
+Reference:
+  Cohen, J. (1988). Statistical Power Analysis for the Behavioral Sciences (2nd ed.)
+  Power for the two-sample t-test uses the non-central t-distribution with
+  non-centrality parameter ncp = d * sqrt(n/2).
+"""
+
+import math
+from dataclasses import dataclass
+from typing import Optional
+
+from scipy import stats
+
+
+@dataclass
+class PowerResult:
+    """Result of an exact power calculation. All fields [COMPUTED]."""
+    effect_size: float
+    n_per_group: int
+    alpha: float
+    power: float
+    method: str
+    note: str
+
+
+class PowerAnalysis:
+    """
+    Exact power analysis for the two-sample t-test.
+
+    Uses the non-central t-distribution — no normal approximation. This matches
+    G*Power / statsmodels to several decimal places.
+    """
+
+    @staticmethod
+    def two_sample_t_test(effect_size: float, n_per_group: int,
+                          alpha: float = 0.05) -> PowerResult:
+        """
+        [COMPUTED] Exact power for a two-sided two-sample t-test.
+
+        Steps:
+          df  = 2n - 2
+          ncp = d * sqrt(n/2)                      (non-centrality parameter)
+          t_crit = t_{1-alpha/2, df}               (critical value under H0)
+          power = P(T' > t_crit) + P(T' < -t_crit) (T' ~ non-central t)
+        """
+        if n_per_group < 2:
+            raise ValueError("n_per_group must be >= 2")
+        if effect_size < 0:
+            raise ValueError("effect_size must be >= 0")
+
+        df = 2 * n_per_group - 2                                  # [COMPUTED]
+        ncp = effect_size * math.sqrt(n_per_group / 2.0)         # [COMPUTED]
+        t_crit = stats.t.ppf(1.0 - alpha / 2.0, df)              # [COMPUTED]
+
+        # [COMPUTED] Power from the non-central t-distribution (both tails)
+        upper = stats.nct.sf(t_crit, df, ncp)        # P(T' > t_crit)
+        lower = stats.nct.cdf(-t_crit, df, ncp)      # P(T' < -t_crit)
+        power = float(upper + lower)
+
+        return PowerResult(
+            effect_size=effect_size,
+            n_per_group=n_per_group,
+            alpha=alpha,
+            power=round(power, 4),
+            method="Exact (non-central t-distribution, scipy.stats.nct)",
+            note="Exact calculation — matches G*Power / statsmodels.",
+        )
+
+    @staticmethod
+    def required_sample_size(effect_size: float, target_power: float = 0.80,
+                             alpha: float = 0.05, max_n: int = 100_000) -> Optional[int]:
+        """
+        [COMPUTED] Smallest n-per-group achieving target_power, found by search.
+
+        Returns None if max_n is reached without hitting target_power.
+        """
+        if effect_size <= 0:
+            raise ValueError("effect_size must be > 0 to compute a sample size")
+        if not (0 < target_power < 1):
+            raise ValueError("target_power must be in (0, 1)")
+
+        # [COMPUTED] Monotone in n, so a linear scan from n=2 finds the minimum.
+        n = 2
+        while n <= max_n:
+            power = PowerAnalysis.two_sample_t_test(effect_size, n, alpha).power
+            if power >= target_power:
+                return n
+            n += 1
+        return None
+
+
+# =============================================================================
+# Self-validation against known reference values
+# =============================================================================
+
+if __name__ == "__main__":
+    print("=" * 70)
+    print("VALIDATION: Power for two-sample t-test (exact, non-central t)")
+    print("=" * 70)
+    print("Reference (G*Power / Cohen): d=0.5, n=64/group, alpha=0.05 -> power ~0.80")
+    print()
+
+    for n in (20, 30, 50, 64, 100):
+        r = PowerAnalysis.two_sample_t_test(effect_size=0.5, n_per_group=n)
+        print(f"  d=0.5, n={n:>3}/group:  power = {r.power}")
+
+    print()
+    print("Reference check: d=0.5 should need n≈64 for 80% power")
+    n_needed = PowerAnalysis.required_sample_size(effect_size=0.5, target_power=0.80)
+    print(f"  required_sample_size(d=0.5, power=0.80) = {n_needed} per group")
+
+    print()
+    print("Large effect d=0.8 (Cohen 'large'): reference n≈26 for 80% power")
+    n_needed_large = PowerAnalysis.required_sample_size(effect_size=0.8, target_power=0.80)
+    print(f"  required_sample_size(d=0.8, power=0.80) = {n_needed_large} per group")
+
+    print()
+    print("Small effect d=0.2 (Cohen 'small'): reference n≈394 for 80% power")
+    n_needed_small = PowerAnalysis.required_sample_size(effect_size=0.2, target_power=0.80)
+    print(f"  required_sample_size(d=0.2, power=0.80) = {n_needed_small} per group")
