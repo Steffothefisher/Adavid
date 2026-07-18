@@ -296,6 +296,7 @@ class ADDatasetLoader:
         self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(exist_ok=True)
         self.data = None
+        self.provenance = None
     
     def list_available_datasets(self) -> Dict:
         """Zeige alle verfügbaren Datensätze"""
@@ -335,6 +336,10 @@ class ADDatasetLoader:
         logger.info(f"✅ Loaded {len(df)} trials from ClinicalTrials.gov")
         
         self.data = df
+        from src.provenance import SnapshotManager
+        manager = SnapshotManager(storage_dir=self.cache_dir / "snapshots")
+        snapshot = manager.create_snapshot(df, source="clinicaltrials_gov", query=query, metadata={"max_trials": max_trials})
+        self.provenance = snapshot.provenance
         return df
     
     def load_synthetic(
@@ -344,6 +349,29 @@ class ADDatasetLoader:
     ) -> pd.DataFrame:
         """Lade synthetische ADAVID-kompatible Daten"""
         self.data = generate_synthetic_trial_data(n_records, include_paradox)
+        from src.provenance import SnapshotManager
+        manager = SnapshotManager(storage_dir=self.cache_dir / "snapshots")
+        snapshot = manager.create_snapshot(self.data, source="synthetic", query=f"n_records={n_records}, paradox={include_paradox}")
+        self.provenance = snapshot.provenance
+        return self.data
+
+    def save_snapshot(self, filename: str, query: str = "", metadata: Optional[Dict] = None) -> Path:
+        """Speichert die aktuell geladenen Daten als signierten Snapshot."""
+        if self.data is None:
+            raise ValueError("No data loaded to save snapshot.")
+        from src.provenance import SnapshotManager
+        manager = SnapshotManager(storage_dir=self.cache_dir / "snapshots")
+        snapshot = manager.create_snapshot(self.data, source="loader_export", query=query, metadata=metadata)
+        self.provenance = snapshot.provenance
+        return manager.save_snapshot(snapshot, filename)
+
+    def load_snapshot(self, filename: str) -> pd.DataFrame:
+        """Lädt und verifiziert einen signierten Snapshot."""
+        from src.provenance import SnapshotManager
+        manager = SnapshotManager(storage_dir=self.cache_dir / "snapshots")
+        snapshot = manager.load_snapshot(filename)
+        self.data = snapshot.data
+        self.provenance = snapshot.provenance
         return self.data
     
     def load_kaggle(self, kaggle_dataset: str = "danielansted/clinicaltrials-gov-clinical-trials-dataset"):
