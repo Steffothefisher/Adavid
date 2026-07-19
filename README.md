@@ -8,6 +8,8 @@ This repository contains an early-stage algorithmic prototype exploring mathemat
 - **Under Active Development:** Financial impact projections (€13.5B) and safety metrics presented in early concept pitches are theoretical macro-estimates for modeling purposes and have not been validated against live insurance datasets.
 - **Test Coverage:** The testing suite and CI/CD pipelines have been established. Current test coverage is 77% (real, verified).
 
+[![Coverage](https://img.shields.io/badge/coverage-77%25-success?style=for-the-badge)](#test)
+
 ---
 
 ## Current Capabilities (What Works Today)
@@ -36,4 +38,4 @@ Modules regarding external APIs (`faers_integration.py`, `live_data_clients.py`)
 
 ---
 ## License
-[Deine Lizenz, z.B. MIT / Apache 2.0]
+MIT License
