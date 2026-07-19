@@ -10,6 +10,10 @@ This repository contains an early-stage algorithmic prototype exploring mathemat
 
 [![Coverage](https://img.shields.io/badge/coverage-77%25-success?style=for-the-badge)](#test)
 
+### Benchmark Datasets
+For validation against published meta-analyses and reference datasets:
+- **RCT_Bench**: 50 real-world RCT datasets (29,094 participants) with standardized variables, trial metadata, demographics, and pre-computed covariate-adjustment results. See [syl051088/RCT_Bench](https://github.com/syl051088/RCT_Bench)
+
 ---
 
 ## Current Capabilities (What Works Today)
