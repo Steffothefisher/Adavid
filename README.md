@@ -20,6 +20,12 @@ For validation against published meta-analyses and reference datasets:
 - Benchmarking Framework, Web UI Integration, Regulatory Report Builder
 - Compliance Scanner. This monolithic file encapsulates all infrastructural components for a single release.
 
+### End-to-End Demo
+Run `python run_demo.py` to execute an automated audit demo with:
+- Simpson's Paradox data generation and detection
+- p-hacking validation against claimed p-values
+- Base-rate efficiency calculations
+
 ---
 
 ## Current Capabilities (What Works Today)
