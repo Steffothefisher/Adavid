@@ -14,6 +14,12 @@ This repository contains an early-stage algorithmic prototype exploring mathemat
 For validation against published meta-analyses and reference datasets:
 - **RCT_Bench**: 50 real-world RCT datasets (29,094 participants) with standardized variables, trial metadata, demographics, and pre-computed covariate-adjustment results. See [syl051088/RCT_Bench](https://github.com/syl051088/RCT_Bench)
 
+### Infrastructure Notes
+`src/advanced_infrastructure.py` (492KB) contains the full ADAVID v4 ecosystem including:
+- Data Provenance, Analysis Workflows, Result Caching, Async Processing
+- Benchmarking Framework, Web UI Integration, Regulatory Report Builder
+- Compliance Scanner. This monolithic file encapsulates all infrastructural components for a single release.
+
 ---
 
 ## Current Capabilities (What Works Today)
