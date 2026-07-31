@@ -1,6 +1,6 @@
 """
 ADAVID v4.0 — Pharmaceutical Audit Engine
-Licensed under AGPL v3 (see LICENSE). Copyright (c) 2026 ADAVID Contributors.
+Licensed under MIT License (see LICENSE). Copyright (c) 2026 ADAVID Contributors.
 
 ADAVID v4.0 — Improvements #13-20: The Complete Ecosystem
 
